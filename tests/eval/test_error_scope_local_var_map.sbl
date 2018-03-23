@@ -1,0 +1,3 @@
+// EXPECT: Error
+
+x = new() { get() { y[0] = 5  y[0] } }  x.get()

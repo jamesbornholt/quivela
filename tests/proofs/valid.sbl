@@ -1,0 +1,17 @@
+y = new() {
+    get() { 5 }
+}
+
+X(y) {
+    new(y=y) {
+        get() { y.get() }
+    }
+}
+
+X(y)
+~ [Equal(_lhs.y, _rhs.y) & Valid(_lhs, y) & Valid(_rhs, y)]
+{{{
+    EqualKeys_AssocGet(ctx1.objs, ctx1'.objs, 1);
+    EqualKeys_AssocGet(ctx2.objs, ctx2'.objs, 1);
+}}}
+X(y)

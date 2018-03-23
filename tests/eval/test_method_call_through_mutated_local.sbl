@@ -1,0 +1,11 @@
+// EXPECT: 6
+
+x = new() { get() { 5 } }
+y = new() { get() { 6 } }
+
+A = new(x=0) { set(p) { x=p } get() { x.get() } }
+
+A.set(x)
+A.get()
+A.set(y)
+A.get()

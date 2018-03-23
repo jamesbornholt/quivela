@@ -1,0 +1,4 @@
+// CONTEXT: x=0
+// EXPECT: Error
+
+x.foo[0] = 0

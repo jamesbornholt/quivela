@@ -1,0 +1,3 @@
+// EXPECT: Error
+
+x = n & 9

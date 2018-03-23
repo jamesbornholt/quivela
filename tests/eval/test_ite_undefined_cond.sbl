@@ -1,0 +1,7 @@
+// EXPECT: 6
+
+// this may seem weird, but the point is that we treat Errors exactly the same
+// as the empty string. here y evaluates to an error, which we treat as if it
+// were the empty string, and so return 0.
+
+if y { 5 } else { 6 }

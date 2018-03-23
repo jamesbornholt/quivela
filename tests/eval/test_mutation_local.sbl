@@ -1,0 +1,3 @@
+// EXPECT: 1
+
+x = new(x=0) { foo() { x = (x + 1) } }  x.foo()  x.x

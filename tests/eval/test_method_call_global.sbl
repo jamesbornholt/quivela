@@ -1,0 +1,3 @@
+// EXPECT: 10
+
+y = 10  x = new(y,z=5) { get(p) { y } }  x.get(6)

@@ -1,0 +1,3 @@
+// EXPECT: Error
+
+x.foo[0] = 0

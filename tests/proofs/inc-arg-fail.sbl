@@ -1,0 +1,24 @@
+// XFAIL: *
+
+// an actual counter
+Ctr() {
+    new(count=0) {
+        inc(x) { count = count + x }
+        get() { count }
+    }
+}
+
+// proxies an actual counter `ctr`
+CtrDelegate(ctr) {
+    new(ctr) {
+        inc(x) { ctr.inc() }
+        get() { ctr.get() }
+    }
+}
+
+// CtrDelegate instantiated with Ctr should be indis. from Ctr
+
+  Ctr() 
+~ [ Equal(_lhs.count, _rhs.ctr.count) ]
+  {{{ assert AssocGet(scope2, "ctr").None?; }}}
+  CtrDelegate(Ctr())

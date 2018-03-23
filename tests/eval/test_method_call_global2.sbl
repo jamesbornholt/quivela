@@ -1,0 +1,11 @@
+// EXPECT: 5
+
+foo(x) {
+    5
+}
+
+y = new() {
+    bar() { foo(10) }
+}
+
+y.bar()

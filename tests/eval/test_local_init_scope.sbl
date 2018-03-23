@@ -1,0 +1,4 @@
+// EXPECT: 5
+
+x = new(y=5,z=y) {}
+x.z

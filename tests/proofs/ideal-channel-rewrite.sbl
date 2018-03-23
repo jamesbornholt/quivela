@@ -1,0 +1,72 @@
+// Dafny backend doesn't scale well here
+// SKIP: dafny
+
+// authenticated encryption with associated data
+
+AeadC() {
+    new(k=0) {
+        enc(a, m) { skEnc(k, a, m) }
+        dec(a, c) { skDec(k, a, c) }
+    }
+}
+
+AeadI(sk) {
+    new(sk, d=0) {
+        enc(a, m) {
+            c = sk.enc(a, zero(m)) & d[<a,c>] = m & c
+        }
+        dec(a, c) {
+            d[<a,c>]
+        }
+    }
+}
+
+assume AeadC() ~ AeadI(AeadC())
+
+// ideal channel
+
+chS(n) {
+    new(n,d=0,ss=0,rr=0,e = AeadC()) {
+        snd(m) { 
+            c = e.enc(ss,m) & n.snd(c)
+            d[<ss=ss+1,c>] = 1
+        }
+        rcv() {
+            c = n.rcv() & 
+            d[<rr,c>] & 
+            rr = rr+1
+        }
+    }
+}
+
+
+n = new() {
+    snd(m) { }
+    rcv() { 0 }
+}
+
+chS(n)
+~ // by definition
+new(n,d=0,ss=0,rr=0,e = AeadC()) {
+    snd(m) { 
+        c = e.enc(ss,m) & n.snd(c)
+        d[<ss=ss+1,c>] = 1
+    }
+    rcv() {
+        c = n.rcv() & 
+        d[<rr,c>] & 
+        rr = rr+1
+    }
+}
+~ [Rewrite(AeadC(), AeadI(AeadC()))]
+new(n,d=0,ss=0,rr=0,e = AeadI(AeadC())) {
+    snd(m) { 
+        c = e.enc(ss,m) & n.snd(c)
+        d[<ss=ss+1,c>] = 1
+    }
+    rcv() {
+        c = n.rcv() & 
+        d[<rr,c>] & 
+        rr = rr+1
+    }
+}

@@ -1,0 +1,7 @@
+// EXPECT: 10
+
+y = 10
+x = new() { 
+    get() { y }
+}
+x.get()

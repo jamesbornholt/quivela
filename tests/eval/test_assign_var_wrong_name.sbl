@@ -1,0 +1,4 @@
+// CONTEXT: x=0
+// EXPECT: 0
+
+y = 10  x

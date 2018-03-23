@@ -1,0 +1,3 @@
+// EXPECT: Error
+
+y = 10  x

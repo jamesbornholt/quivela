@@ -1,0 +1,10 @@
+// EXPECT: 10
+
+y = new(x=5) {}
+x = new(y,z=5) { 
+    get() { 
+        y.x[0]
+    }
+}
+y.x[0] = 10
+x.get()

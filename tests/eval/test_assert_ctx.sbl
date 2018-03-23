@@ -1,0 +1,3 @@
+// EXPECT: 0
+
+x = 0; assert (x=x+1)==1; x

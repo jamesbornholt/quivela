@@ -1,0 +1,27 @@
+// XFAIL: *
+
+x = new() {
+    get() { 0 }
+    set() { 0 }
+}
+
+ObjA(n) {
+    new(n) {
+        get() { n.get() }
+        set() { n.set() }
+    }
+}
+
+ObjB(n) {
+    new(n) {
+        get() { 1 }
+        set() { 1 }
+    }
+}
+
+assume ObjA(x) ~ ObjB(x)
+
+// should fail because we replaced 'a' with 'x'
+ObjA(x)
+~ [Rewrite(ObjA(a), ObjB(x))]
+ObjB(x)

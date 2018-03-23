@@ -1,0 +1,24 @@
+// Dafny backend doesn't support adversaries
+// SKIP: dafny
+
+// XFAIL: *
+
+x = adversary()
+
+new(x) {
+    bar(y) {
+        if (y > 0) {
+            x.foo(5)
+        }
+        0
+    }
+}
+~
+new(x) {
+    bar(y) {
+        if (y < 0) {
+            x.foo(5)
+        }
+        0
+    }
+}

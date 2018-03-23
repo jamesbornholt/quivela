@@ -1,0 +1,37 @@
+// XFAIL: *
+
+InnerA() {
+    new() {
+        get() { 0 }
+    }
+}
+InnerB() {
+    new() {
+        get() { 1 }
+    }
+}
+InnerC() {
+    new() {
+        get() { 2 }
+    }
+}
+
+assume InnerA() ~ InnerB()
+
+ObjA() {
+    new(n=InnerA()) {
+        get() { n.get() }
+    }
+}
+
+ObjB() {
+    new(n=InnerC()) {
+        get() { n.get() }
+    }
+}
+
+// substitute InnerA() with InnerB() in the definitions of ObjA and ObjB to prove indis.
+// should fail because ObjB's inner is InnerC
+ObjA()
+~ [Rewrite(InnerA(), InnerB())]
+ObjB()

@@ -1,0 +1,9 @@
+// EXPECT: 6
+
+x = new() {
+    get(y) {
+        y 
+    }
+}
+
+x.get(6)

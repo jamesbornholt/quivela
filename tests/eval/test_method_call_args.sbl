@@ -1,0 +1,3 @@
+// EXPECT: 7
+
+x = new(y=5,z=6) { get(a, b) { 7 } foo(c, d) { 8 } }  x.get(1, 2)

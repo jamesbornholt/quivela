@@ -1,0 +1,3 @@
+// EXPECT: Error
+
+x = new() { get() { 5 } }  x.get(5)

@@ -1,0 +1,4 @@
+// CONTEXT: xxx=111
+// EXPECT: 111
+
+if xxx { xxx }

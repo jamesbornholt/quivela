@@ -1,0 +1,30 @@
+// Dafny backend doesn't support arbitrary invariants
+// SKIP: dafny
+
+Foo() {
+    new(x=0,y=0) {
+        write(i) {
+            x[i] = 1
+            y[i] = 1
+        }
+        get(i) {
+            x[i] & y[i]
+        }
+    }
+}
+
+Bar() {
+    new(x=0,y=0) {
+        write(i) {
+            x[i] = 1
+            y[i] = 1
+        }
+        get(i) {
+            y[i]
+        }
+    }
+}
+
+Foo()
+~ [invariant(i) { !y[i] | x[i] } & Equal(_lhs.x, _rhs.x) & Equal(_lhs.y, _rhs.y)]
+Bar()

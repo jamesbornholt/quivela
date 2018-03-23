@@ -1,0 +1,5 @@
+new() { get() { 5 } }
+~
+new() { get() { 4 + 1 } }
+~ [Equal(5, _rhs.n)]
+new(n=5) { get() { n } }

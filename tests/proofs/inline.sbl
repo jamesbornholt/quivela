@@ -1,0 +1,24 @@
+// an actual counter
+Ctr() {
+    new(count=0) {
+        inc() { count = count + 1 }
+        get() { count }
+    }
+}
+
+// proxies an actual counter `ctr`
+CtrDelegate() {
+    new(ctr=new(count=0) {
+        inc() { count = count + 1 }
+        get() { count }
+    }) {
+        inc() { ctr.inc() }
+        get() { ctr.get() }
+    }
+}
+
+// CtrDelegate should be indis. from Ctr
+
+  Ctr() 
+~ [ Equal(_lhs.count, _rhs.ctr.count) ]
+  CtrDelegate()

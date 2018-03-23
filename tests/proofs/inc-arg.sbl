@@ -1,0 +1,28 @@
+// Dafny has non-det issues on this test
+// SKIP: dafny
+
+// an actual countera
+Ctr() {
+    new(count=0) {
+        inc(x) { count = count + x }
+        get() { count }
+    }
+}
+
+// proxies an actual counter `ctr`
+CtrDelegate(ctr) {
+    new(ctr) {
+        inc(x) { ctr.inc(x) }
+        get() { ctr.get() }
+    }
+}
+
+// CtrDelegate instantiated with Ctr should be indis. from Ctr
+
+  Ctr() 
+~ [ Equal(_lhs.count, _rhs.ctr.count) ]
+{{{
+    assert AssocGet(scope2, "ctr").None?;
+    EqualKeys_AssocGet(ctx2.objs, ctx2'.objs, 1);
+}}}
+  CtrDelegate(Ctr())

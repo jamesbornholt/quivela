@@ -1,0 +1,5 @@
+// XFAIL: *
+
+FooA() { new () { bar(z) { 1 } } }
+FooB() { new () { bar(z) { 2 } } }
+FooA() ~ FooB()

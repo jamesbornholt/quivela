@@ -1,0 +1,45 @@
+InnerA() {
+    new() {
+        get() { 0 }
+    }
+}
+InnerB() {
+    new() {
+        get() { 1 }
+    }
+}
+
+assume InnerA() ~ InnerB()
+
+ObjA() {
+    new(n=InnerA()) {
+        get() { n.get() }
+    }
+}
+
+ObjB() {
+    new(n=InnerB()) {
+        get() { n.get() }
+    }
+}
+
+// substitute InnerA() with InnerB() in the definitions of ObjA and ObjB to prove indis.
+ObjA()
+~ [Equal(_lhs.n, _rhs.n)]
+{{{
+    EqualKeys_AssocGet(ctx1.objs, ctx1'.objs, 1);
+    EqualKeys_AssocGet(ctx2.objs, ctx2'.objs, 1);
+}}}
+new(n=InnerA()) {
+    get() { n.get() }
+}
+~ [Rewrite(InnerA(), InnerB())]
+new(n=InnerB()) {
+    get() { n.get() }
+}
+~ [Equal(_lhs.n, _rhs.n)]
+{{{
+    EqualKeys_AssocGet(ctx1.objs, ctx1'.objs, 1);
+    EqualKeys_AssocGet(ctx2.objs, ctx2'.objs, 1);
+}}}
+ObjB()

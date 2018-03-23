@@ -1,0 +1,3 @@
+// EXPECT: 9
+
+x = new(x=0) { foo(y) { x = (x + y) }  bar() { x } }  x.foo(3)  x.foo(6)  x.bar()

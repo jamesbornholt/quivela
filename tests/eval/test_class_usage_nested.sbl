@@ -1,0 +1,8 @@
+// EXPECT: 10
+
+
+    PrfC() { new (v=0) { foo(z) { z } } } 
+    PrfI(c) { new (c,q=0) { bar (m) { c.foo(m) } } } 
+    p = PrfI(PrfC()) 
+    p.bar(10)
+    

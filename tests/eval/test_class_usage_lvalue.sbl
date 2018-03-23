@@ -1,0 +1,3 @@
+// EXPECT: 5
+
+PrfC(x) { new (x) { foo() { x } } }  PrfC(5).foo()

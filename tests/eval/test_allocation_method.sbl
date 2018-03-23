@@ -1,0 +1,3 @@
+// EXPECT: Ref
+
+new(xxx=0){get() {xxx}}

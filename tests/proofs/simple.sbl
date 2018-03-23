@@ -1,0 +1,13 @@
+FooA() {
+    new () {
+        bar(z) { 1 }
+    } 
+}
+FooB() {
+    new () {
+        bar(z) { 1 } 
+    } 
+}
+FooA() 
+~ [true]
+FooB()

@@ -1,0 +1,24 @@
+x = new() {
+    get() { 0 }
+    set() { 0 }
+}
+
+ObjA(n) {
+    new(n) {
+        get() { n.get() }
+        set() { n.set() }
+    }
+}
+
+ObjB(n) {
+    new(n) {
+        get() { 1 }
+        set() { 1 }
+    }
+}
+
+assume ObjA(x) ~ ObjB(x)
+
+ObjA(x)
+~ [Rewrite(ObjA(x), ObjB(x))]
+ObjB(x)

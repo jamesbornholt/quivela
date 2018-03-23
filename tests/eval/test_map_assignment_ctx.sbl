@@ -1,0 +1,4 @@
+// CONTEXT: xxx=0
+// EXPECT: 666
+
+xxx[000] = 666

@@ -1,0 +1,4 @@
+// EXPECT: None
+// XFAIL: *
+
+x=10; assert x == 9

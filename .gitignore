@@ -1,0 +1,16 @@
+.DS_Store
+.vscode
+.env
+*.pyc
+*.exe
+*.dll
+*.mdb
+test-*.dfy
+test-*.rkt
+__pycache__
+.cache
+parser.out
+*~
+compiled
+.mypy_cache
+.pytest_cache

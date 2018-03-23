@@ -1,0 +1,9 @@
+// EXPECT: 6
+
+x = new() {
+    get0(y) { y }
+    get1(y: *) { y } 
+    get2(y: <*,*>) { y }
+    get3(t: <*,<*,*>,*>) { y }
+}
+x.get1(6)

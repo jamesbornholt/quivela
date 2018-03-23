@@ -1,0 +1,4 @@
+// CONTEXT: xxx=1
+// EXPECT: 666
+
+if xxx { 666 } else { if yyy { 555 } }

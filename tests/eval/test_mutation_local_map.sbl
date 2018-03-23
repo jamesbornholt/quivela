@@ -1,0 +1,9 @@
+// EXPECT: 2
+
+x = new(x=0) { 
+    foo(y) { x[y] = 1 }  
+    bar(y) { x[y] } 
+}
+x.foo(3)
+x.foo(6)
+x.bar(3) + x.bar(6)

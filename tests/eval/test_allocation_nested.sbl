@@ -1,0 +1,15 @@
+// EXPECT: 6
+
+CtrDelegate() {
+    new(ctr=new(count=5) {
+        inc() { count = count + 1 }
+        get() { count }
+    }) {
+        inc() { ctr.inc() }
+        get() { ctr.get() }
+    }
+}
+
+x = CtrDelegate()
+x.inc()
+x.ctr.get()

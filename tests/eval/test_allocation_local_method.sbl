@@ -1,0 +1,3 @@
+// EXPECT: Ref
+
+new(xxx=5555) { foo(yyy) { yyy } }

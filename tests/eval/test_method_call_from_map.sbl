@@ -1,0 +1,3 @@
+// EXPECT: 7
+
+x = 0  x[1] = new() { get() { 7 } }  x[1].get()

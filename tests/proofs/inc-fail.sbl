@@ -1,0 +1,21 @@
+// XFAIL: *
+
+// an actual counter
+Ctr() {
+    new(count=0) {
+        inc() { count = count + 1 }
+        get() { count }
+    }
+}
+
+// proxies an actual counter `ctr`
+CtrDelegate(ctr) {
+    new(ctr) {
+        inc() { ctr.inc() }
+        get() { ctr.get() + 1 }
+    }
+}
+
+// CtrDelegate instantiated with Ctr should NOT be indis. from Ctr
+// because we broke CtrDelegate's get method
+Ctr() ~ [Equal(_lhs.count, _rhs.ctr.count)] CtrDelegate(Ctr())

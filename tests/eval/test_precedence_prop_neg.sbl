@@ -1,0 +1,8 @@
+// EXPECT: 1
+
+// make sure that property dereference binds tighter than !
+// (so we don't interpret this as (!x).y)
+
+x = 0
+x = new(y=z) { }
+!x.y

@@ -1,0 +1,3 @@
+// EXPECT: Error
+
+x = new(z=5) { get(n) { y = 10 } }  x.get(7)  y

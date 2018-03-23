@@ -1,0 +1,18 @@
+// EXPECT: 2
+
+ctr = new(count=0) {
+    inc() {
+        count = count + 1
+    }
+    get() {
+        count
+    }
+}
+
+ctr.inc()
+ctr.get()
+ctr.inc()
+
+assert ctr.get() == 2
+
+ctr.get()

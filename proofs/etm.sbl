@@ -1,0 +1,423 @@
+// _m is unforgable iff _m ~ MacI(_m)
+
+MacI(mac) {
+    new (mac,tg=0) {
+        tag(m) { tg[m] = mac.tag(m) }
+        verify(m,t) { t & tg[m] == t }
+    }
+}
+
+
+// _e freshly encrypts iff _e ~ Enc(_e)
+
+Enc(e) {
+    new (e, d=0) {
+        enc(m) { c = e.enc(m) & !d[c] & d[c] = m & c }
+        dec(c) { e.dec(c) }
+    }
+}
+
+ 
+// _e is a CPA-secure encryptor iff CpaC(_e) ~ CpaI(_e)
+
+CpaC(e) {
+    new (e,h=0) {
+        enc(m) { c = e.enc(m) & h[c]=1 & c }
+        dec(c) { h[c] & e.dec(c) }
+    }
+}
+
+CpaI(e) {
+    new (e,d=0) {
+        enc(m) { c = e.enc(zero(m)) & d[c] = m & c }
+        dec(c) { d[c] }
+    }
+}
+
+
+// _e is an AEAD encryptor iff _e ~ AeadI(_e)
+
+AeadI(e) {
+    new (e,d=0) {
+        enc(a,m) { c = e.enc(a,zero(m)) & d[<a,c>] = m & c }
+        dec(a,c) { d[<a,c>] }
+    }
+}
+
+
+// concrete encrypt-then-mac
+
+EtM(e,mac) {
+    new (e,mac) {
+        enc(a,m) { 
+            m &
+            em = e.enc(m) &
+            t = mac.tag(<a,em>) &
+            <em,t> 
+        }
+        dec(a,c) { 
+            em = c.get[0]
+            t = c.get[1]
+            c &
+            mac.verify(<a,em>,t) &
+            e.dec(em)
+        }
+    }
+}
+
+
+// zero a bit-string (`& 0` ensures zero-length strings remain zero-length)
+zero(m) { m & 0 }
+
+
+
+// the encryptor and MAC are adversarial (e.g., could be remote)
+_e = adversary()
+_mac = adversary()
+
+
+// assuming _e freshly encrypts...
+assume _e ~ Enc(_e)
+// and _e is a CPA-secure encryptor...
+assume CpaC(_e) ~ CpaI(_e)
+// and _mac is an unforgable MAC...
+assume _mac ~ MacI(_mac)
+
+
+// then EtM(_e, _mac) is an AEAD encryptor
+
+EtM(_e,_mac)
+~ // definition of EtM
+new (e=_e,mac=_mac) {
+    enc(a,m) { 
+        m &
+        em = e.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) {
+        em = c.get[0];
+        t = c.get[1];
+        c &
+        mac.verify(<a,em>,t) &
+        e.dec(em)
+    }
+}
+// The first step is to idealize mac and to use it to encapsulate e with a CpaC,
+// then turn it into a CpaI
+~ [Rewrite(_mac, MacI(_mac))] // _mac ~ MacI(_mac)
+new (e=_e,mac=MacI(_mac)) {
+    enc(a,m) { 
+        m &
+        em = e.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) {
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        e.dec(em)
+    }
+}
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac)] // introducing cpa
+new (e=_e,mac=MacI(_mac),cpa=new(e=_e) {
+        enc(m) { e.enc(m) }
+        dec(c) { e.dec(c) }
+    }) {
+    enc(a,m) { 
+        m &
+        em = e.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        e.dec(em)
+    }
+}
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.e, _rhs.cpa.e) & Ref(_lhs, e) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e)] // uninlining (replacing calls to e with calls to cpa)
+new (e=_e,mac=MacI(_mac),cpa=new(e=_e) {
+        enc(m) { e.enc(m) }
+        dec(c) { e.dec(c) }
+    }) {
+    enc(a,m) { 
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.dec(em)
+    }
+}
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.e, _rhs.cpa.e) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e)] // introducing h
+new (e=_e,mac=MacI(_mac),cpa=new(e=_e,h=0) {
+        enc(m) { c = e.enc(m) & h[c] = 1 & c }
+        dec(c) { e.dec(c) }
+    }) {
+    enc(a:*, m:*) {
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a:*, c:<*,*>) {
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.dec(em)
+    }
+}
+~ [invariant(a:*, em:*) { !mac.tg[<a,em>] | cpa.h[em] } & Equal(_lhs.e, _rhs.e) & Equal(_lhs.e, _rhs.cpa.e) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Valid(_lhs, mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.h, _rhs.cpa.h) & Valid(_lhs, cpa.h)] // invariant(a,em) { !mac.tg[<a,em>] | cpa.h[em] };
+new (e=_e,mac=MacI(_mac),cpa=new(e=_e,h=0) {
+        enc(m) { c = e.enc(m) & h[c] = 1 & c }
+        dec(c) { e.dec(c) }
+    }) {
+    enc(a, m) { 
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a, c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.h[em] &
+        cpa.dec(em)
+    }
+}
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.e, _rhs.cpa.e) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.h, _rhs.cpa.h) & Valid(_lhs, cpa.h)] // cpa.dec called only from dec, so we can push cpa.h[em] into cpa.dec
+new (e=_e,mac=MacI(_mac),cpa=new(e=_e,h=0) {
+        enc(m) { c = e.enc(m) & h[c] = 1 & c }
+        dec(c) { h[c] & e.dec(c) }
+    }) {
+    enc(a,m) { 
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.dec(em)
+    }
+}
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.h, _rhs.cpa.h) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.h, _rhs.cpa.h)] // def CpaC
+new (e=_e,mac=MacI(_mac),cpa=CpaC(_e)) {
+    enc(a,m) { 
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.dec(em)
+    }
+}
+~ [Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.h, _rhs.cpa.h) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.h, _rhs.cpa.h)] // e appears only in CpaC(e)
+new (mac=MacI(_mac),cpa=CpaC(_e)) {
+    enc(a,m) { 
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.dec(em)
+    }
+}
+~ [Rewrite(CpaC(_e), CpaI(_e))]  // CpaC(_e) ~ CpaI(_e)
+new (mac=MacI(_mac),cpa=CpaI(_e)) {
+    enc(a,m) { 
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.dec(em)
+    }
+}
+~ [Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.d, _rhs.cpa.d) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac)] // introducing e back again
+new (e=_e,mac=MacI(_mac),cpa=CpaI(_e)) {
+    enc(a,m) { 
+        m &
+        em = cpa.enc(m) &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.dec(em)
+    }
+}
+// We next data-refine cpa.d (i.e., introduce a new variable d with a coupling invariant, then eliminate
+// the old variable as auxilliary) to a table for the "extended" ciphertexts (that include the mac tabs)
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.e, _rhs.e) & Valid(_rhs, e) & Equal(_lhs.cpa.d, _rhs.cpa.d) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac)]     // inlining calls to cpa
+new (e=_e,mac=MacI(_mac),cpa=CpaI(_e)) {
+    enc(a,m) { 
+        m &
+        em = e.enc(zero(m)) &
+        cpa.d[em] = m &
+        t = mac.tag(<a,em>) &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.d[em]
+    }
+}
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.d, _rhs.cpa.d) & Valid(_lhs, cpa.d) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac)] // introducing d
+new (e=_e,mac=MacI(_mac),cpa=CpaI(e),d=0) {
+    enc(a,m) { 
+        m &
+        em = e.enc(zero(m)) &
+        cpa.d[em] = m &
+        t = mac.tag(<a,em>) &
+        d[<a,<em,t>>] = m &
+        <em,t> 
+    }
+    dec(a,c) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.d[em]
+    }
+}
+~ [Rewrite(_e, Enc(_e))] // _e ~ Enc(_e)  and adding type annotations
+new (e=Enc(_e),mac=MacI(_mac),cpa=CpaI(e),d=0) {
+    enc(a:*,m:*) { 
+        m &
+        em = e.enc(zero(m)) &
+        cpa.d[em] = m &
+        t = mac.tag(<a,em>) &
+        d[<a,<em,t>>] = m &
+        <em,t> 
+    }
+    dec(a:*,c:<*,*>) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &
+        cpa.d[em]
+    }
+}
+~ [invariant(a:*,em:*,t:*) { (d[<a,<em,t>>] == (t & mac.tg[<a,em>] == t & cpa.d[em])) & (!mac.tg[<a,em>] | (cpa.d[em] & e.d[em])) } & Equal(_lhs.e, _rhs.e) & Equal(_lhs.e.e, _rhs.e.e) & Equal(_lhs.e.e, _e) & Equal(_lhs.e.d, _rhs.e.d) & Equal(_lhs.d, _rhs.d) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.e, _rhs.e) & Equal(_lhs.cpa.d, _rhs.cpa.d) & Valid(_lhs, cpa.d) & Equal(_lhs.mac, _rhs.mac) & Valid(_lhs, mac.tg) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac)]
+new (e=Enc(_e),mac=MacI(_mac),cpa=CpaI(e),d=0) {
+    enc(a:*,m:*) { 
+        m &
+        em = e.enc(zero(m)) &
+        cpa.d[em] = m &
+        t = mac.tag(<a,em>) &
+        d[<a,<em,t>>] = m &
+        <em,t> 
+    }
+    dec(a:*,c:<*,*>) { 
+        em = c.get[0]
+        t = c.get[1]
+        c &
+        mac.verify(<a,em>,t) &  // t & mac.tg[<a,em>] == t
+        cpa.d[em] &
+        d[<a,<em,t>>]  // !d[<a,<em,t>>] | (t == mac.tg[<a,em>] & cpa.d[em] == d[<a,<em,t>>])
+    }
+}
+~ [invariant(a:*,em:*,t:*) { !d[<a,<em,t>>] | (t & (t == mac.tg[<a,em>] & cpa.d[em] == d[<a,<em,t>>]) & e.d[em]) } & Equal(_lhs.e, _rhs.e) & Equal(_lhs.e.e, _rhs.e.e) & Equal(_lhs.e.e, _e) & Equal(_lhs.e.d, _rhs.e.d) & Equal(_lhs.d, _rhs.d) & Equal(_lhs.cpa, _rhs.cpa) & Equal(_lhs.cpa.e, _rhs.cpa.e) & Equal(_lhs.cpa.e, _rhs.e) & Equal(_lhs.cpa.d, _rhs.cpa.d) & Valid(_lhs, cpa.d) & Equal(_lhs.mac, _rhs.mac) & Valid(_lhs, mac.tg) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac)]
+new (e=Enc(_e),mac=MacI(_mac),cpa=CpaI(e),d=0) {
+    enc(a,m) { 
+        m &
+        em = e.enc(zero(m)) &
+        cpa.d[em] = m &
+        t = mac.tag(<a,em>) &
+        d[<a,<em,t>>] = m &
+        <em,t> 
+    }
+    dec(a,c) {
+        d[<a,c>]
+    }
+}
+~ [Rewrite(Enc(_e), _e)] // _e ~ Enc(_e)
+new (e=_e,mac=MacI(_mac),cpa=CpaI(e),d=0) {
+    enc(a,m) { 
+        m &
+        em = e.enc(zero(m)) &
+        cpa.d[em] = m &
+        t = mac.tag(<a,em>) &
+        d[<a,<em,t>>] = m &
+        <em,t> 
+    }
+    dec(a,c) { 
+        d[<a,c>]
+    }
+}
+~ [Valid(_lhs, cpa.d) & Equal(_lhs.e, _rhs.e) & Equal(_lhs.d, _rhs.d) & Equal(_lhs.mac, _rhs.mac) & Equal(_lhs.mac.tg, _rhs.mac.tg) & Equal(_lhs.mac.mac, _rhs.mac.mac)]     // cpa and the object it points to are auxilliary
+new (e=_e,mac=MacI(_mac),d=0) {
+    enc(a,m) { 
+        m &
+        em = e.enc(zero(m)) &
+        em &
+        t = mac.tag(<a,em>) &
+        d[<a,<em,t>>] = m &
+        <em,t> 
+    }
+    dec(a,c) { 
+        d[<a,c>]
+    }
+}
+~ [Rewrite(MacI(_mac), _mac)]      // inlining; MacI(_mac) ~ _mac
+new (e=_e,mac=_mac,d=0) {
+    enc(a,m) { 
+        m &
+        em = e.enc(zero(m)) &
+        em &
+        t = mac.tag(<a,em>) &
+        d[<a,<em,t>>] = m &
+        <em,t> 
+    }
+    dec(a,c) { 
+        d[<a,c>]
+    }
+}
+~ [Equal(_lhs.e, _rhs.e.e) & Equal(_lhs.mac, _rhs.e.mac) & Equal(_lhs.d, _rhs.d)] // factor out EtM
+new (e=new(e=_e,mac=_mac) {
+        enc(a,m) { m & em = e.enc(m) & em & t = mac.tag(<a,em>) & <em,t> }
+        dec(a,c) { em = c.get[0]  t = c.get[1]  mac.verify(<a, em>, t) & e.dec(em) }
+    },d=0) {
+    enc(a,m) { c=e.enc(a, zero(m)) & d[<a,c>] = m & c }
+    dec(a,c) { d[<a,c>] }
+}
+~ [Equal(_lhs.e, _rhs.e) & Equal(_lhs.d, _rhs.d) & Equal(_lhs.e.e, _rhs.e.e) & Equal(_lhs.e.mac, _rhs.e.mac)] // def AeadI,EtM
+AeadI(EtM(_e,_mac))

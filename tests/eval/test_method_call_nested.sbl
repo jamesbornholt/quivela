@@ -1,0 +1,11 @@
+// EXPECT: 5
+
+x = new(y=0) { 
+    p1(z) { y = z } 
+    p2() { y.foo() } 
+}
+
+y = new() { foo() { 5 } }  
+
+x.p1(y)
+x.p2()

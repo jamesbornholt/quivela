@@ -1,0 +1,12 @@
+ObjA() {
+    new(n=5) {
+        get() { n }
+    }
+}
+
+// expand the definition of ObjA()
+ObjA()
+~
+new(n=5) {
+    get() { n }
+}

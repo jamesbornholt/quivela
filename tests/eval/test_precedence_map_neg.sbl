@@ -1,0 +1,8 @@
+// EXPECT: 1
+
+// make sure that map dereference binds tighter than !
+// (so we don't interpret this as (!x)[1])
+
+x = 0
+x[1] = y // to generate an error
+!x[1]

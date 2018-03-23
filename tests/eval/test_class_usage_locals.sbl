@@ -1,0 +1,3 @@
+// EXPECT: 5
+
+PrfC(x) { new(x,y=0) { foo(z) { x } } }  p = PrfC(5)  p.foo(10)
