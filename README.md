@@ -1,5 +1,7 @@
 # Quivela
 
+[![Build Status](https://travis-ci.org/awslabs/quivela.svg?branch=master)](https://travis-ci.org/awslabs/quivela) ![Apache-2.0](https://img.shields.io/badge/Licence-Apache%202.0-blue.svg)
+
 Quivela is a prototype tool for proving the security of cryptographic protocols
 (see an example proof in [`proofs/etm.sbl`](proofs/etm.sbl)),
 developed by the AWS Automated Reasoning Group.

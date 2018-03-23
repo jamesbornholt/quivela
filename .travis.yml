@@ -1,0 +1,41 @@
+language: python
+python:
+  - "3.6"
+dist: trusty
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - mono-devel
+    - dos2unix
+
+env:
+  global:
+    - DAFNYURL=https://github.com/Microsoft/dafny/releases/download/v2.1.1/dafny-2.1.1.10209-x64-ubuntu-14.04.zip
+    - RACKETURL=https://mirror.racket-lang.org/installers/6.12/racket-6.12-x86_64-linux.sh
+
+install:
+  # Download and set up Dafny
+  - wget -nv $DAFNYURL -O dafny.zip
+  - unzip dafny.zip
+  # Fix the Dafny binary
+  - dos2unix dafny/dafny
+  - chmod +x dafny/dafny
+  # Install racket
+  - wget -nv $RACKETURL -O racket.sh
+  - chmod +x racket.sh
+  - ./racket.sh --in-place --dest "$PWD/racket"
+  # Set PATH
+  - export PATH="$PWD/dafny:$PWD/racket/bin:$PATH"
+  # Install Rosette (but not its docs)
+  - raco pkg install --auto --no-setup rosette
+  - raco setup -Dl rosette
+  # Install python dependencies
+  - pip3 install -r requirements.txt
+
+script:
+  - make test-eval
+  - make test-eval BACKEND=rosette
+  - make test-proof
+  - make test-proof BACKEND=rosette
